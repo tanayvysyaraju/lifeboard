@@ -1,0 +1,18 @@
+# Root-level ignores
+.env
+__pycache__/
+*.pyc
+
+# Ignore virtual environment (Python)
+backend/env/
+
+# Ignore node_modules (React)
+frontend/node_modules/
+
+# Ignore system junk
+.DS_Store
+Thumbs.db
+
+# Ignore build outputs
+frontend/dist/
+frontend/.vite/
