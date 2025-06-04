@@ -8,10 +8,7 @@ const WelcomePage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    if (userType === "fullwork") window.location.href = "/fullscheduler";
-    else if (userType === "flexwork") window.location.href = "/flexscheduler";
-    else if (userType === "personalwork") window.location.href = "/personalscheduler";
+    window.location.href = "/CalendarPage";
   };
 
   return (
@@ -33,22 +30,6 @@ const WelcomePage = () => {
             onChange={(e) => setName(e.target.value)}
             required
           />
-        </div>
-
-        <div className="mb-4">
-          <label htmlFor="userType" className="form-label"><strong>User Type:</strong></label>
-          <select
-            id="userType"
-            className="form-select"
-            value={userType}
-            onChange={(e) => setUserType(e.target.value)}
-            required
-          >
-            <option value="">Select...</option>
-            <option value="fullwork">Work 9–5 + personal life</option>
-            <option value="personalwork">Personal scheduler only</option>
-            <option value="flexwork">Work scheduler only</option>
-          </select>
         </div>
 
         <div className="mb-3">
