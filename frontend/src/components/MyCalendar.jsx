@@ -11,15 +11,7 @@ import localizer from './calendarLocalizer' // your dateFnsLocalizer setup
 
 const DnDCalendar = withDragAndDrop(Calendar)
 
-const MyCalendar = () => {
-  const [events, setEvents] = useState([
-    {
-      title: 'Team Meeting',
-      start: new Date(),
-      end: new Date(new Date().getTime() + 60 * 60 * 1000),
-    },
-  ])
-
+const MyCalendar = ({ events, setEvents }) => {
   const handleEventDrop = ({ event, start, end }) => {
     const updatedEvents = events.map(e =>
       e === event ? { ...e, start, end } : e
@@ -37,10 +29,13 @@ const MyCalendar = () => {
         defaultView={Views.WEEK}
         startAccessor="start"
         endAccessor="end"
+        titleAccessor="title"
+        tooltipAccessor="info" // optional: shows explanation
         style={{ backgroundColor: 'white' }}
       />
     </div>
   )
 }
+
 
 export default MyCalendar

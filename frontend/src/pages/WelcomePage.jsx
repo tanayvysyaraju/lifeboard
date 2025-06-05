@@ -5,11 +5,37 @@ const WelcomePage = () => {
   const [userType, setUserType] = useState("");
   const [sleepStart, setSleepStart] = useState("");
   const [sleepEnd, setSleepEnd] = useState("");
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    window.location.href = "/CalendarPage";
+    setError("");
+
+    try {
+      const res = await fetch("http://127.0.0.1:5000/api/userinfo", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          name,
+          sleepStart,
+          sleepEnd
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Something went wrong");
+
+      // ✅ Wait until POST succeeds, then redirect
+      window.location.href = "/CalendarPage";
+    } catch (err) {
+      setError(err.message);
+    }
   };
+
 
   return (
     <div className="container min-vh-100 d-flex flex-column justify-content-center align-items-center">

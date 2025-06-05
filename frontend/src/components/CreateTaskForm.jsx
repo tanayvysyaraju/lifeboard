@@ -7,11 +7,19 @@ const CreateTaskForm = ({ onTaskAdd }) => {
     type: "",
     duration: "",
     dueDate: "",
-    priority: ""
+    priority: "",
+    project: "",
+    client: "",
+    isMeeting: "",
+    deepWork: "",
+    activityType: "",
+    travel: "",
+    energyDemand: ""
   });
 
+
   const handleChange = (e) => {
-    setTask({ ...task, [e.target.name]: e.target.value });
+    setTask(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = (e) => {
