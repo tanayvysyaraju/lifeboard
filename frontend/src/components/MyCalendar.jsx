@@ -21,7 +21,8 @@ const MyCalendar = ({ events, setEvents }) => {
 
   // Render popover on hover
   const eventPropGetter = (event) => ({
-    style: { cursor: 'pointer' },
+    style: { cursor: 'pointer', backgroundColor: 'black' },
+    
   });
 
   const components = {

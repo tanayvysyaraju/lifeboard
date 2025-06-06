@@ -26,6 +26,8 @@ def handle_user_info():
     name = data.get('name')
     sleep_start = data.get('sleepStart')
     sleep_end = data.get('sleepEnd')
+    work_start = data.get('workStart')
+    work_end = data.get('workEnd')
 
     if not name or not sleep_start or not sleep_end:
         return jsonify({"error": "Missing required fields"}), 400
@@ -33,6 +35,8 @@ def handle_user_info():
     user_data['name'] = name
     user_data['sleepStart'] = sleep_start
     user_data['sleepEnd'] = sleep_end
+    user_data['workStart'] = work_start
+    user_data['workEnd'] = work_end
 
     return jsonify({"message": "User info received successfully"}), 200
 
@@ -47,11 +51,10 @@ def get_user_info():
 @app.route('/api/tasks', methods=['POST'])
 def receive_tasks():
     data = request.get_json()
-    print("Received tasks:", data)  # ADD THIS LINE
+    print("Received tasks:", data)
     task_queue.clear()
     task_queue.extend(data.get('tasks', []))
     return jsonify({"message": "Tasks received"}), 200
-
 
 # Store scheduled events globally
 scheduled_events = []
@@ -61,12 +64,14 @@ def generate_schedule():
     print("✅ Starting full schedule regeneration")
     sleep_start = user_data.get('sleepStart')
     sleep_end = user_data.get('sleepEnd')
+    work_start = user_data.get('workStart')
+    work_end = user_data.get('workEnd')
 
     now = datetime.now()
     today = now.date()
 
     all_tasks = scheduled_events + task_queue
-    all_tasks.sort(key=lambda t: t.get('priority', 'medium'))  # Optional: sort
+    all_tasks.sort(key=lambda t: t.get('priority', 'medium'))
 
     new_schedule = []
     unscheduled_tasks = []
@@ -83,21 +88,22 @@ def generate_schedule():
         s_time = datetime.combine(start.date(), datetime.strptime(sleep_start, "%H:%M").time())
         e_time = datetime.combine(start.date(), datetime.strptime(sleep_end, "%H:%M").time())
         if sleep_start > sleep_end:
-            # overnight sleep window
             return start >= s_time or start < e_time
         return s_time <= start < e_time
 
     def is_valid_slot(task_type, start):
-        weekday = start.weekday()  # 0 = Monday, 6 = Sunday
+        weekday = start.weekday()
         hour = start.hour
+        s_time = datetime.combine(start.date(), datetime.strptime(work_start, "%H:%M").time())
+        e_time = datetime.combine(start.date(), datetime.strptime(work_end, "%H:%M").time())
 
         if task_type == 'work':
-            return 0 <= weekday <= 4 and 9 <= hour < 17
+            return 0 <= weekday <= 4 and s_time <= start < e_time
         elif task_type == 'personal':
             if in_sleep_hours(start):
                 return False
             if 0 <= weekday <= 4:
-                return hour < 9 or hour >= 17
+                return start < s_time or start >= e_time
             else:
                 return True
         return False
@@ -115,10 +121,17 @@ def generate_schedule():
             continue
 
         task_type = task.get("type", "work")
+        preferred_day = task.get("preferredDay")
         scheduled = False
 
-        # Try every 30 min from today up to due date
         current = datetime.combine(today, datetime.min.time())
+        if preferred_day:
+            try:
+                preferred = datetime.fromisoformat(preferred_day)
+                current = datetime.combine(preferred.date(), datetime.min.time())
+            except:
+                pass
+
         while current.date() <= due_date.date():
             proposed_end = current + timedelta(hours=duration_hours)
             if (
@@ -156,11 +169,6 @@ def generate_schedule():
         "unscheduled": unscheduled_tasks
     }), 200
 
-
-
-
-
-
 # Build GPT-style prompt with optional fields
 def build_prompt(tasks, sleep_start, sleep_end):
     prompt = "Create a daily schedule for the following tasks with these constraints:\n"
@@ -179,6 +187,18 @@ def build_prompt(tasks, sleep_start, sleep_end):
                 prompt += f", Meeting: {task['isMeeting']}"
             if task.get('deepWork'):
                 prompt += f", Deep Work: {task['deepWork']}"
+            if task.get('resourceNeeds'):
+                prompt += f", Resources: {task['resourceNeeds']}"
+            if task.get('resourceConflict'):
+                prompt += f", Conflict: {task['resourceConflict']}"
+            if task.get('riskFactors'):
+                prompt += f", Risk: {task['riskFactors']}"
+            if task.get('riskMitigated'):
+                prompt += f", Mitigated: {task['riskMitigated']}"
+            if task.get('workflowSupported'):
+                prompt += f", Workflow: {task['workflowSupported']}"
+            if task.get('milestoneCritical'):
+                prompt += f", Critical Milestone: {task['milestoneCritical']}"
 
         elif task['type'] == 'personal':
             if task.get('activityType'):
