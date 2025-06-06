@@ -121,16 +121,9 @@ def generate_schedule():
             continue
 
         task_type = task.get("type", "work")
-        preferred_day = task.get("preferredDay")
         scheduled = False
 
         current = datetime.combine(today, datetime.min.time())
-        if preferred_day:
-            try:
-                preferred = datetime.fromisoformat(preferred_day)
-                current = datetime.combine(preferred.date(), datetime.min.time())
-            except:
-                pass
 
         while current.date() <= due_date.date():
             proposed_end = current + timedelta(hours=duration_hours)

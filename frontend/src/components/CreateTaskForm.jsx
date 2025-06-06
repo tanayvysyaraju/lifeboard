@@ -4,7 +4,6 @@ import { Form, Button } from 'react-bootstrap';
 const CreateTaskForm = ({ onTaskAdd }) => {
   const [task, setTask] = useState({
     name: "",
-    preferredDay: "",
     type: "",
     duration: "",
     dueDate: "",
@@ -48,16 +47,6 @@ const CreateTaskForm = ({ onTaskAdd }) => {
       <Form.Group className="mb-2">
         <Form.Label>Task Name</Form.Label>
         <Form.Control name="name" value={task.name} onChange={handleChange} required />
-      </Form.Group>
-
-      <Form.Group className="mb-2">
-        <Form.Label>Preferred Scheduling Day (Optional)</Form.Label>
-        <Form.Control
-          name="preferredDay"
-          type="date"
-          value={task.preferredDay}
-          onChange={handleChange}
-        />
       </Form.Group>
 
       <Form.Group className="mb-2">
