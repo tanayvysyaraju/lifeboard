@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import MyCalendar from '../components/MyCalendar';
-import CreateTaskForm from '../components/CreateTaskForm';
+import TaskModal from '../components/TaskModal';
 import { Button, ListGroup } from 'react-bootstrap';
 
 const CalendarPage = () => {
@@ -10,8 +10,8 @@ const CalendarPage = () => {
   const [tasksToSchedule, setTasksToSchedule] = useState([]);
   const [scheduledTasks, setScheduledTasks] = useState([]);
   const [unscheduled, setUnscheduled] = useState([]);
+  const [showTaskModal, setShowTaskModal] = useState(false);
 
-  // Fetch user data from Flask when component mounts
   useEffect(() => {
     fetch("http://127.0.0.1:5000/api/userinfo")
       .then((res) => res.json())
@@ -25,6 +25,7 @@ const CalendarPage = () => {
 
   const handleTaskAdd = (task) => {
     setTasksToSchedule((prev) => [...prev, task]);
+    setShowTaskModal(false);
   };
 
   const handleGenerateSchedule = () => {
@@ -52,8 +53,8 @@ const CalendarPage = () => {
             end: new Date(event.end),
           }));
 
-          setScheduledTasks(formattedEvents); // Overwrite with regenerated full schedule
-          setTasksToSchedule([]); // Clear input queue
+          setScheduledTasks(formattedEvents);
+          setTasksToSchedule([]);
 
           if (Array.isArray(data.unscheduled)) {
             setUnscheduled(data.unscheduled);
@@ -62,19 +63,19 @@ const CalendarPage = () => {
           console.error("Unexpected response:", data);
         }
       })
-
-
       .catch(err => {
         console.error("Schedule error:", err.message);
       });
   };
 
-
-
-
   return (
     <div className="container mt-4">
-      <h3 className="mb-4">{userName ? `${userName}'s Smart Schedule` : 'Your Smart Schedule'}</h3>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h3>{userName ? `${userName}'s Smart Schedule` : 'Your Smart Schedule'}</h3>
+        <Button variant="dark" onClick={() => setShowTaskModal(true)}>
+          + Add Task
+        </Button>
+      </div>
 
       <MyCalendar
         events={scheduledTasks}
@@ -99,9 +100,7 @@ const CalendarPage = () => {
         </>
       )}
 
-
-
-      <CreateTaskForm onTaskAdd={handleTaskAdd} />
+      <TaskModal show={showTaskModal} handleClose={() => setShowTaskModal(false)} onTaskAdd={handleTaskAdd} />
 
       {tasksToSchedule.length > 0 && (
         <>
@@ -128,7 +127,6 @@ const CalendarPage = () => {
                   </>
                 )}
               </ListGroup.Item>
-
             ))}
           </ListGroup>
 

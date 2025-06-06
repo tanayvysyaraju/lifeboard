@@ -4,6 +4,7 @@ import { Form, Button } from 'react-bootstrap';
 const CreateTaskForm = ({ onTaskAdd }) => {
   const [task, setTask] = useState({
     name: "",
+    preferredDay: "",
     type: "",
     duration: "",
     dueDate: "",
@@ -14,8 +15,15 @@ const CreateTaskForm = ({ onTaskAdd }) => {
     deepWork: "",
     activityType: "",
     travel: "",
-    energyDemand: ""
+    energyDemand: "",
+    resourceNeeds: "",
+    resourceConflict: "",
+    riskFactors: "",
+    riskMitigated: "",
+    workflowSupported: "",
+    milestoneCritical: ""
   });
+
 
 
   const handleChange = (e) => {
@@ -36,11 +44,20 @@ const CreateTaskForm = ({ onTaskAdd }) => {
 
   return (
     <Form onSubmit={handleSubmit} className="mb-4">
-      <h5>Create a Task</h5>
 
       <Form.Group className="mb-2">
         <Form.Label>Task Name</Form.Label>
         <Form.Control name="name" value={task.name} onChange={handleChange} required />
+      </Form.Group>
+
+      <Form.Group className="mb-2">
+        <Form.Label>Preferred Scheduling Day (Optional)</Form.Label>
+        <Form.Control
+          name="preferredDay"
+          type="date"
+          value={task.preferredDay}
+          onChange={handleChange}
+        />
       </Form.Group>
 
       <Form.Group className="mb-2">
@@ -76,6 +93,50 @@ const CreateTaskForm = ({ onTaskAdd }) => {
           <Form.Group className="mb-2">
             <Form.Label>Deep Work Required?</Form.Label>
             <Form.Select name="deepWork" onChange={handleChange}>
+              <option value="">Optional</option>
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </Form.Select>
+          </Form.Group>
+
+          <h6>Optional: Life Science Project Management</h6>
+
+          <Form.Group className="mb-2">
+            <Form.Label>What resources (equipment or personnel) are required?</Form.Label>
+            <Form.Control name="resourceNeeds" onChange={handleChange} />
+          </Form.Group>
+
+          <Form.Group className="mb-2">
+            <Form.Label>Do you anticipate resource conflicts?</Form.Label>
+            <Form.Select name="resourceConflict" onChange={handleChange}>
+              <option value="">Optional</option>
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </Form.Select>
+          </Form.Group>
+
+          <Form.Group className="mb-2">
+            <Form.Label>Are there any risks associated with delay?</Form.Label>
+            <Form.Control name="riskFactors" onChange={handleChange} />
+          </Form.Group>
+
+          <Form.Group className="mb-2">
+            <Form.Label>Have risks been mitigated or flagged?</Form.Label>
+            <Form.Select name="riskMitigated" onChange={handleChange}>
+              <option value="">Optional</option>
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </Form.Select>
+          </Form.Group>
+
+          <Form.Group className="mb-2">
+            <Form.Label>Which workflows does this task support?</Form.Label>
+            <Form.Control name="workflowSupported" onChange={handleChange} />
+          </Form.Group>
+
+          <Form.Group className="mb-2">
+            <Form.Label>Is this task part of a critical milestone or handoff?</Form.Label>
+            <Form.Select name="milestoneCritical" onChange={handleChange}>
               <option value="">Optional</option>
               <option value="yes">Yes</option>
               <option value="no">No</option>
@@ -138,7 +199,9 @@ const CreateTaskForm = ({ onTaskAdd }) => {
         </Form.Select>
       </Form.Group>
 
-      <Button type="submit" variant="primary">Add Task</Button>
+      <div className="d-flex justify-content-end">
+        <Button type="submit" variant="dark">Add Task</Button>
+      </div>
     </Form>
   );
 };

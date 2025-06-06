@@ -2,9 +2,10 @@ import React, { useState } from "react";
 
 const WelcomePage = () => {
   const [name, setName] = useState("");
-  const [userType, setUserType] = useState("");
   const [sleepStart, setSleepStart] = useState("");
   const [sleepEnd, setSleepEnd] = useState("");
+  const [workStart, setWorkStart] = useState("");
+  const [workEnd, setWorkEnd] = useState("");
   const [error, setError] = useState("");
 
 
@@ -21,7 +22,9 @@ const WelcomePage = () => {
         body: JSON.stringify({
           name,
           sleepStart,
-          sleepEnd
+          sleepEnd,
+          workStart,
+          workEnd
         })
       });
 
@@ -29,7 +32,6 @@ const WelcomePage = () => {
 
       if (!res.ok) throw new Error(data.error || "Something went wrong");
 
-      // ✅ Wait until POST succeeds, then redirect
       window.location.href = "/CalendarPage";
     } catch (err) {
       setError(err.message);
@@ -40,8 +42,8 @@ const WelcomePage = () => {
   return (
     <div className="container min-vh-100 d-flex flex-column justify-content-center align-items-center">
       <div className="text-center mb-4">
-        <h1>Welcome to <strong>LifeBoard</strong>!</h1>
-        <h4 className="text-muted">The first ever personalized AI-powered task planner</h4>
+        <h1>Welcome to <strong>PathPlan</strong>!</h1>
+        <h4 className="text-muted">The first ever personalized AI-powered task planner for Life Science PMs</h4>
         <p className="mt-2">Fill out the form below so we can personalize your experience:</p>
       </div>
 
@@ -78,6 +80,28 @@ const WelcomePage = () => {
             className="form-control"
             value={sleepEnd}
             onChange={(e) => setSleepEnd(e.target.value)}
+            required
+          />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="workStart" className="form-label"><strong>Work Start Time:</strong></label>
+          <input
+            id="workStart"
+            type="time"
+            className="form-control"
+            value={workStart}
+            onChange={(e) => setWorkStart(e.target.value)}
+            required
+          />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="workEnd" className="form-label"><strong>Work End Time:</strong></label>
+          <input
+            id="workEnd"
+            type="time"
+            className="form-control"
+            value={workEnd}
+            onChange={(e) => setWorkEnd(e.target.value)}
             required
           />
         </div>
