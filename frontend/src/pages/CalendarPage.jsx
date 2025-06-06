@@ -52,9 +52,9 @@ const CalendarPage = () => {
             end: new Date(event.end),
           }));
 
-          setScheduledTasks(prev => [...prev, ...formattedEvents]); // append, don't overwrite
+          setScheduledTasks(formattedEvents); // Overwrite with regenerated full schedule
+          setTasksToSchedule([]); // Clear input queue
 
-          setTasksToSchedule([]);
           if (Array.isArray(data.unscheduled)) {
             setUnscheduled(data.unscheduled);
           }
@@ -62,6 +62,7 @@ const CalendarPage = () => {
           console.error("Unexpected response:", data);
         }
       })
+
 
       .catch(err => {
         console.error("Schedule error:", err.message);
@@ -77,6 +78,7 @@ const CalendarPage = () => {
 
       <MyCalendar
         events={scheduledTasks}
+        setEvents={setScheduledTasks}
         sleepStart={sleepStart}
         sleepEnd={sleepEnd}
         mode="full"

@@ -53,83 +53,110 @@ def receive_tasks():
     return jsonify({"message": "Tasks received"}), 200
 
 
-# Generate schedule from tasks and user info
+# Store scheduled events globally
+scheduled_events = []
+
 @app.route('/api/schedule', methods=['POST'])
 def generate_schedule():
-    print("✅ Starting schedule generation")
+    print("✅ Starting full schedule regeneration")
     sleep_start = user_data.get('sleepStart')
     sleep_end = user_data.get('sleepEnd')
-    print(f"🛌 Sleep window: {sleep_start} to {sleep_end}")
-
-    prompt = build_prompt(task_queue, sleep_start, sleep_end)
-    print("🧠 Prompt:\n", prompt)
 
     now = datetime.now()
-    work_start = now.replace(hour=9, minute=0, second=0, microsecond=0)
-    work_end = now.replace(hour=21, minute=0, second=0, microsecond=0)
+    today = now.date()
 
-    events = []
+    all_tasks = scheduled_events + task_queue
+    all_tasks.sort(key=lambda t: t.get('priority', 'medium'))  # Optional: sort
+
+    new_schedule = []
     unscheduled_tasks = []
 
     def overlaps(start, end):
-        for e in events:
+        for e in new_schedule:
             existing_start = datetime.fromisoformat(e['start'])
             existing_end = datetime.fromisoformat(e['end'])
             if max(start, existing_start) < min(end, existing_end):
                 return True
         return False
 
-    for task in task_queue:
-        task_name = task.get("name", "Unnamed")
-        print(f"➡️ Attempting to schedule: {task_name}")
+    def in_sleep_hours(start):
+        s_time = datetime.combine(start.date(), datetime.strptime(sleep_start, "%H:%M").time())
+        e_time = datetime.combine(start.date(), datetime.strptime(sleep_end, "%H:%M").time())
+        if sleep_start > sleep_end:
+            # overnight sleep window
+            return start >= s_time or start < e_time
+        return s_time <= start < e_time
 
-        # Validate duration
+    def is_valid_slot(task_type, start):
+        weekday = start.weekday()  # 0 = Monday, 6 = Sunday
+        hour = start.hour
+
+        if task_type == 'work':
+            return 0 <= weekday <= 4 and 9 <= hour < 17
+        elif task_type == 'personal':
+            if in_sleep_hours(start):
+                return False
+            if 0 <= weekday <= 4:
+                return hour < 9 or hour >= 17
+            else:
+                return True
+        return False
+
+    for task in all_tasks:
+        task_name = task.get("name", "Unnamed")
+
         try:
             duration_hours = float(task.get("duration", 0))
             if duration_hours <= 0:
-                raise ValueError("Duration must be a positive number.")
-        except Exception as err:
-            unscheduled_tasks.append({
-                "name": task_name,
-                "reason": f"Invalid duration: {err}"
-            })
-            continue
-
-        # Validate due date
-        try:
+                raise ValueError("Duration must be positive")
             due_date = datetime.fromisoformat(task["dueDate"])
         except Exception as err:
-            unscheduled_tasks.append({
-                "name": task_name,
-                "reason": f"Invalid due date: {err}"
-            })
+            unscheduled_tasks.append({"name": task_name, "reason": str(err)})
             continue
 
+        task_type = task.get("type", "work")
         scheduled = False
-        slot = work_start
 
-        # Try to find a valid time window that doesn't overlap and ends before due date
-        while slot + timedelta(hours=duration_hours) <= work_end:
-            proposed_end = slot + timedelta(hours=duration_hours)
-            if not overlaps(slot, proposed_end) and proposed_end.date() <= due_date.date():
-                events.append({
+        # Try every 30 min from today up to due date
+        current = datetime.combine(today, datetime.min.time())
+        while current.date() <= due_date.date():
+            proposed_end = current + timedelta(hours=duration_hours)
+            if (
+                is_valid_slot(task_type, current) and
+                not overlaps(current, proposed_end) and
+                proposed_end.date() <= due_date.date()
+            ):
+                justification = (
+                    f"Placed on {current.strftime('%A %b %d, %I:%M %p')} because "
+                    f"it fits the allowed time window for a {task_type} task, "
+                    f"respects your sleep ({sleep_start}–{sleep_end}) and avoids conflicts."
+                )
+                new_schedule.append({
                     "title": task_name,
-                    "start": slot.isoformat(),
+                    "start": current.isoformat(),
                     "end": proposed_end.isoformat(),
-                    "info": f"Auto-scheduled: {task.get('type')} | Priority: {task.get('priority')} | Due: {task.get('dueDate')}"
+                    "info": justification
                 })
                 scheduled = True
                 break
-            slot += timedelta(minutes=30)
+
+            current += timedelta(minutes=30)
 
         if not scheduled:
             unscheduled_tasks.append({
                 "name": task_name,
-                "reason": "No available time slot before due date"
+                "reason": "No valid time slot available given due date, type, and constraints"
             })
 
-    print("✅ Finished scheduling")
-    return jsonify({"events": events, "unscheduled": unscheduled_tasks}), 200
+    scheduled_events.clear()
+    scheduled_events.extend(all_tasks)
+
+    return jsonify({
+        "events": new_schedule,
+        "unscheduled": unscheduled_tasks
+    }), 200
+
+
 
 
 
@@ -163,7 +190,7 @@ def build_prompt(tasks, sleep_start, sleep_end):
 
         prompt += "\n"
 
-    prompt += "\nReturn a JSON array with `title`, `start`, `end`, and a brief explanation for each scheduling decision with NO OVERLAPS IN START AND END TIME IN TASKS"
+    prompt += "\nReturn a JSON array with `title`, `start`, `end`, and a brief explanation for each scheduling decision with NO OVERLAPS IN START AND END TIME IN TASKS. Make sure to try to allot the task at a certain type based on the task name and what time of the day the task would usually be completed."
     return prompt
 
 if __name__ == "__main__":
